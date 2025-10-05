@@ -24,15 +24,18 @@ async function convert() {
   let data = await fetchPrices(PRICE_URL_MAIN);
   if (!data) data = await fetchPrices(PRICE_URL_FALLBACK);
   if (!data) {
-    console.error("Не удалось получить данные ни из одного источника");
-    return;
+    console.error("❌ Ошибка: не удалось получить данные ни из одного источника");
+    process.exit(1);
   }
 
   const arr = data.min15 || data.Min15 || data.data || data.Prices || [];
 
   const now = new Date();
   const filtered = arr
-    .filter((p) => new Date(p.time || p.StartTime) >= now)
+    .filter((p) => {
+      const t = new Date(p.time || p.StartTime);
+      return t >= now && t.getDate() === now.getDate();
+    })
     .slice(0, MAX_INTERVALS)
     .map((p) => ({
       t: p.time || p.StartTime,
@@ -46,7 +49,7 @@ async function convert() {
   };
 
   fs.mkdirSync("public", { recursive: true });
-  fs.writeFileSync(OUTPUT_FILE, JSON.stringify(light));
+  fs.writeFileSync(OUTPUT_FILE, JSON.stringify(light, null, 2));
   console.log(`✅ Сохранено ${filtered.length} интервалов в ${OUTPUT_FILE}`);
 }
 
