@@ -13,8 +13,7 @@ async function fetchPrices(url) {
   try {
     const res = await fetch(url, { timeout: 10000 });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    return data;
+    return await res.json();
   } catch (err) {
     console.error(`⚠️ Ошибка при загрузке ${url}: ${err.message}`);
     return null;
@@ -24,6 +23,7 @@ async function fetchPrices(url) {
 async function convert() {
   console.log("⏳ Загружаем данные Pörssisähkö...");
   let data = await fetchPrices(PRICE_URL_MAIN);
+
   if (!data) {
     console.warn("⚠️ Основной источник недоступен, пробуем фолбек...");
     data = await fetchPrices(PRICE_URL_FALLBACK);
@@ -35,7 +35,6 @@ async function convert() {
   }
 
   const arr = data.min15 || data.Min15 || data.data || data.Prices || [];
-
   if (!Array.isArray(arr) || arr.length === 0) {
     console.error("❌ Пустой массив данных в ответе!");
     process.exit(1);
@@ -53,8 +52,9 @@ async function convert() {
       v: +(p.value * VAT_MULTIPLIER + MARGIN).toFixed(2),
     }));
 
+  // создаём структуру для записи
   const output = {
-    updated: new Date().toISOString(),
+    updated: new Date().toISOString(), // <--- обновляется каждый раз
     count: filtered.length,
     prices: filtered,
   };
@@ -63,7 +63,9 @@ async function convert() {
   fs.writeFileSync(OUTPUT_FILE, JSON.stringify(output, null, 2));
 
   console.log(`✅ Обновлено ${filtered.length} интервалов → ${OUTPUT_FILE}`);
-  process.exit(0);
 }
 
-convert();
+convert().catch((err) => {
+  console.error("❌ Скрипт завершился с ошибкой:", err);
+  process.exit(1);
+});
