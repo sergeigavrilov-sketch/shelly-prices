@@ -1,12 +1,11 @@
 {
   "name": "shelly-prices",
   "version": "1.0.0",
-  "description": "Lightweight JSON generator for Shelly floor heating controller",
   "type": "module",
   "scripts": {
-    "generate": "node scripts/convert.js"
+    "update": "node convert-prices.js"
   },
   "dependencies": {
     "node-fetch": "^3.3.2"
   }
-}
+} 
